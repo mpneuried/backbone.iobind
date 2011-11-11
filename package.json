@@ -24,6 +24,8 @@
     "fez": "0.0.x",
     "jq": "1.6.x",
     "backbone": "0.5.x",
-    "underscore": "1.2.x"
+    "underscore": "1.2.x",
+    "redis": "0.6.7",
+    "hiredis": "0.1.12"
   }
 }

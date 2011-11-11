@@ -9,11 +9,13 @@ var express = require('express')
   , routes = require('./routes')
   , folio = require('folio')
   , path = require('path')
+  , redis = require('redis')
   , seed = require('seed');
 
 var app = module.exports = express.createServer();
 
 // Configuration
+root._CONFIG_PORT = parseInt( process.argv[2] , 10 ) || 1227;
 
 var stylus_compile = function (str, path) {
   return stylus(str)
@@ -22,6 +24,16 @@ var stylus_compile = function (str, path) {
           .include(require('nib').path)
           .include(require('fez').path);
 };
+
+root._CONFIG = { redis: {
+  host: "192.168.11.24",
+  port: 6379}}
+
+var RedisStore = socketio.RedisStore;
+var redisClient = redis.createClient( _CONFIG.redis.port, _CONFIG.redis.host, _CONFIG.redis.options || {} )
+
+var ioRediStore = new RedisStore( { nodeId: function(){ return "instance_" + _CONFIG_PORT } } );
+
 
 app.configure(function(){
   app.set('views', __dirname + '/views');
@@ -70,6 +82,14 @@ var db = new Minimal.Todos()
 // Socket.io
 
 var io = require('socket.io').listen(app);
+
+io.configure(
+  io.enable('browser client minification'),
+  io.enable('browser client etag'),
+  io.enable('browser client gzip'),
+  io.set('log level', 10),
+  io.set( "store", ioRediStore )
+);
 
 /**
  * our socket transport events
@@ -169,6 +189,7 @@ app.get('/js/templates.js', routes.templatejs);
 app.get('/js/vendor.js', routes.vendorjs);
 
 if (!module.parent) {
-  app.listen(1227);
+  app.listen(_CONFIG_PORT);
   console.log("Backbone.ioBind Example App listening on port %d in %s mode", app.address().port, app.settings.env);
+  console.log( "\033[31m\nINFO: you can define the PORT by starting with the port as a argument. Example:\033[1m\napp.js 8010\n\033[0m" )
 }
